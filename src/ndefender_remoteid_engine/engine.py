@@ -10,6 +10,7 @@ from ndefender_remoteid_engine.config import AppConfig, ReplayConfig, TelemetryC
 from ndefender_remoteid_engine.decode.dedupe import DedupeFilter
 from ndefender_remoteid_engine.decode.odid_parser import OdidParser
 from ndefender_remoteid_engine.events.validate import validate_event
+from ndefender_remoteid_engine.fusion.gps import GpsMonitor
 from ndefender_remoteid_engine.health import HealthMonitor
 from ndefender_remoteid_engine.io.emit import JsonlEmitter, SinkEmitter
 from ndefender_remoteid_engine.tracking.tracker import ContactTracker
@@ -44,6 +45,7 @@ class ReplayEngine:
     _dedupe: DedupeFilter = field(default_factory=DedupeFilter, init=False)
     _tracker: ContactTracker = field(init=False)
     _health: HealthMonitor = field(init=False)
+    _gps: Optional[GpsMonitor] = field(default=None, init=False)
     _last_ts: Optional[int] = field(default=None, init=False)
 
     def __post_init__(self) -> None:
@@ -62,6 +64,8 @@ class ReplayEngine:
             interval_s=telemetry_cfg.interval_s,
             stale_after_s=telemetry_cfg.stale_after_s,
         )
+        if self.config.gps.enabled:
+            self._gps = GpsMonitor()
 
     def _emit(self, event: dict) -> None:
         if self.validate_events:
@@ -95,6 +99,8 @@ class ReplayEngine:
                 return
             self._last_ts = obs.timestamp_ms
             self._health.update_frame(obs.timestamp_ms)
+            if self._gps is not None:
+                _ = self._gps.poll_once()
 
             for event in self._tracker.process_observation(obs):
                 self._emit(event)
@@ -128,6 +134,7 @@ class LiveEngine:
     _dedupe: DedupeFilter = field(default_factory=DedupeFilter, init=False)
     _tracker: ContactTracker = field(init=False)
     _health: HealthMonitor = field(init=False)
+    _gps: Optional[GpsMonitor] = field(default=None, init=False)
     _last_ts: Optional[int] = field(default=None, init=False)
 
     def __post_init__(self) -> None:
@@ -146,6 +153,8 @@ class LiveEngine:
             interval_s=telemetry_cfg.interval_s,
             stale_after_s=telemetry_cfg.stale_after_s,
         )
+        if self.config.gps.enabled:
+            self._gps = GpsMonitor()
 
     def _emit(self, event: dict) -> None:
         if self.validate_events:
@@ -176,6 +185,8 @@ class LiveEngine:
                     continue
                 self._last_ts = obs.timestamp_ms
                 self._health.update_frame(obs.timestamp_ms)
+                if self._gps is not None:
+                    _ = self._gps.poll_once()
 
                 for event in self._tracker.process_observation(obs):
                     self._emit(event)
