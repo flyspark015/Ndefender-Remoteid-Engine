@@ -75,3 +75,7 @@
 - Enhanced `stats` command with contact counts, time range, and active contact tracking.
 - Added CLI stats test coverage.
 - Tests: `pytest -q` -> `12 passed in 0.41s`.
+
+## Update 2026-02-14 (Deployment)
+- Added deployment notes and systemd example to README.
+- Tests: `pytest -q` -> `12 passed in 0.41s` (latest).

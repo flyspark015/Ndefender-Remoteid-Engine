@@ -69,3 +69,35 @@ Engine output is always written to:
 pytest -q
 python -m compileall -q src
 ```
+
+## Deployment Notes
+
+### Prerequisites
+- `tshark` installed with OpenDroneID dissector (for live capture).
+- Monitor-mode interface available (e.g., `mon0`).
+- `gpsd` + `gpspipe` available if GPS is enabled.
+
+### Production Run (systemd example)
+```
+[Unit]
+Description=N-Defender RemoteID Engine
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ndefender/ndefender-remoteid-engine
+ExecStart=/opt/ndefender/ndefender-remoteid-engine/.venv/bin/ndefender-remoteid run --config /opt/ndefender/ndefender-remoteid-engine/config/default.yaml
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Health/Status
+- Enable `api.enabled: true` to expose `/api/v1/status` on the configured host/port.
+- `backend.enabled: true` to stream events to the backend WebSocket.
+
+### Logs
+- Engine output: `/opt/ndefender/logs/remoteid_engine.jsonl`
+- Use `ndefender-remoteid stats --log /opt/ndefender/logs/remoteid_engine.jsonl --validate` for quick integrity checks.
