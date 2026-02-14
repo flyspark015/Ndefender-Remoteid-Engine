@@ -3,7 +3,7 @@ import sys
 from collections import Counter
 
 from ndefender_remoteid_engine.config import AppConfig, load_config
-from ndefender_remoteid_engine.engine import ReplayEngine
+from ndefender_remoteid_engine.engine import LiveEngine, ReplayEngine
 from ndefender_remoteid_engine.events.validate import validate_event
 from ndefender_remoteid_engine.io.jsonl import read_jsonl
 from ndefender_remoteid_engine.version import __version__
@@ -41,8 +41,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "run":
-        print("run: live capture not implemented yet")
-        return 2
+        cfg = load_config(args.config)
+        engine = LiveEngine(config=cfg)
+        engine.run()
+        return 0
     if args.command == "replay":
         if args.config:
             cfg = load_config(args.config)

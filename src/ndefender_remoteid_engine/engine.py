@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Callable, Optional
 
 from ndefender_remoteid_engine.capture.replay_capture import ReplayCapture
+from ndefender_remoteid_engine.capture.wifi_capture import WifiCapture
 from ndefender_remoteid_engine.config import AppConfig, ReplayConfig, TelemetryConfig, TrackerConfig
 from ndefender_remoteid_engine.decode.dedupe import DedupeFilter
 from ndefender_remoteid_engine.decode.odid_parser import OdidParser
@@ -11,6 +12,9 @@ from ndefender_remoteid_engine.events.validate import validate_event
 from ndefender_remoteid_engine.health import HealthMonitor
 from ndefender_remoteid_engine.io.emit import JsonlEmitter, SinkEmitter
 from ndefender_remoteid_engine.tracking.tracker import ContactTracker
+
+
+CaptureFactory = Callable[[], object]
 
 
 @dataclass
@@ -82,6 +86,83 @@ class ReplayEngine:
             self._emit_telemetry(obs.timestamp_ms)
 
         capture.run(handler)
+
+        if self._last_ts is not None:
+            flush_ts = self._last_ts + int(self._tracker.ttl_s * 1000) + 1
+            for event in self._tracker.sweep(now_ms=flush_ts):
+                self._emit(event)
+            self._emit_telemetry(flush_ts)
+
+        self._health.stop()
+
+
+@dataclass
+class LiveEngine:
+    config: AppConfig = field(default_factory=AppConfig)
+    emitter: JsonlEmitter | SinkEmitter = field(default_factory=JsonlEmitter)
+    validate_events: bool = False
+    capture_factory: Optional[Callable[[], WifiCapture]] = None
+
+    _parser: OdidParser = field(default_factory=OdidParser, init=False)
+    _dedupe: DedupeFilter = field(default_factory=DedupeFilter, init=False)
+    _tracker: ContactTracker = field(init=False)
+    _health: HealthMonitor = field(init=False)
+    _last_ts: Optional[int] = field(default=None, init=False)
+
+    def __post_init__(self) -> None:
+        tracker_cfg: TrackerConfig = self.config.tracker
+        telemetry_cfg: TelemetryConfig = self.config.telemetry
+
+        self._tracker = ContactTracker(
+            ttl_s=tracker_cfg.ttl_s,
+            min_frames_to_confirm=tracker_cfg.min_frames_to_confirm,
+            update_interval_s=tracker_cfg.update_interval_s,
+        )
+        self._health = HealthMonitor(
+            interval_s=telemetry_cfg.interval_s,
+            stale_after_s=telemetry_cfg.stale_after_s,
+        )
+
+    def _emit(self, event: dict) -> None:
+        if self.validate_events:
+            validate_event(event)
+        self.emitter.emit(event)
+
+    def _emit_telemetry(self, now_ms: int) -> None:
+        telemetry = self._health.maybe_emit(
+            now_ms=now_ms,
+            contacts_active=self._tracker.active_contacts(),
+            mode="live",
+        )
+        if telemetry:
+            self._emit(telemetry)
+
+    def run(self) -> None:
+        capture = self.capture_factory() if self.capture_factory else WifiCapture(
+            interface=self.config.capture.interface
+        )
+        self._health.start()
+
+        try:
+            for record in capture.iter_records():
+                obs = self._parser.parse_record(record)
+                if obs is None:
+                    continue
+                if not self._dedupe.accept(obs):
+                    continue
+                self._last_ts = obs.timestamp_ms
+                self._health.update_frame(obs.timestamp_ms)
+
+                for event in self._tracker.process_observation(obs):
+                    self._emit(event)
+                for event in self._tracker.sweep(now_ms=obs.timestamp_ms):
+                    self._emit(event)
+                self._emit_telemetry(obs.timestamp_ms)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            if isinstance(capture, WifiCapture):
+                capture.stop()
 
         if self._last_ts is not None:
             flush_ts = self._last_ts + int(self._tracker.ttl_s * 1000) + 1
