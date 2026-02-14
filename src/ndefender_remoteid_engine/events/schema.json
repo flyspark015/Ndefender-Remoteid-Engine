@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "N-Defender RemoteID Event Envelope",
+  "type": "object",
+  "required": ["type", "timestamp", "source", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "enum": [
+        "CONTACT_NEW",
+        "CONTACT_UPDATE",
+        "CONTACT_LOST",
+        "TELEMETRY_UPDATE",
+        "REPLAY_STATE"
+      ]
+    },
+    "timestamp": {"type": "integer", "minimum": 0},
+    "source": {"const": "remoteid"},
+    "data": {"type": "object"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"type": {"const": "CONTACT_NEW"}}},
+      "then": {"properties": {"data": {"$ref": "#/$defs/contact_event"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "CONTACT_UPDATE"}}},
+      "then": {"properties": {"data": {"$ref": "#/$defs/contact_event"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "CONTACT_LOST"}}},
+      "then": {"properties": {"data": {"$ref": "#/$defs/contact_lost_event"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "TELEMETRY_UPDATE"}}},
+      "then": {"properties": {"data": {"$ref": "#/$defs/telemetry_event"}}}
+    },
+    {
+      "if": {"properties": {"type": {"const": "REPLAY_STATE"}}},
+      "then": {"properties": {"data": {"$ref": "#/$defs/replay_event"}}}
+    }
+  ],
+  "$defs": {
+    "contact_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "last_seen_ts"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {"const": "REMOTE_ID"},
+        "model": {"type": "string"},
+        "operator_id": {"type": "string"},
+        "lat": {"type": "number", "minimum": -90, "maximum": 90},
+        "lon": {"type": "number", "minimum": -180, "maximum": 180},
+        "altitude_m": {"type": "number"},
+        "speed_m_s": {"type": "number", "minimum": 0},
+        "last_seen_ts": {"type": "integer", "minimum": 0}
+      }
+    },
+    "contact_lost_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "last_seen_ts"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {"const": "REMOTE_ID"},
+        "last_seen_ts": {"type": "integer", "minimum": 0}
+      }
+    },
+    "telemetry_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "last_ts", "contacts_active", "mode"],
+      "properties": {
+        "state": {"enum": ["offline", "ok", "degraded", "replay"]},
+        "last_ts": {"type": "integer", "minimum": 0},
+        "contacts_active": {"type": "integer", "minimum": 0},
+        "mode": {"enum": ["live", "replay"]}
+      }
+    },
+    "replay_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "speed"],
+      "properties": {
+        "state": {"type": "string", "minLength": 1},
+        "speed": {"type": "number", "minimum": 0},
+        "position": {"type": "integer", "minimum": 0},
+        "total": {"type": "integer", "minimum": 0},
+        "ts": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

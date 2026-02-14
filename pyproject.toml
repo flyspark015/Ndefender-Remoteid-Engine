@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ndefender-remoteid-engine"
+version = "0.1.0"
+description = "N-Defender RemoteID Contact Detection & Tracking Engine"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Proprietary"}
+authors = [{name = "N-Defender"}]
+dependencies = [
+  "jsonschema>=4.21.0",
+  "PyYAML>=6.0.1",
+]
+
+[project.scripts]
+ndefender-remoteid = "ndefender_remoteid_engine.cli.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

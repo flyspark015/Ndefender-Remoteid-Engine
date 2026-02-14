@@ -1,0 +1,13 @@
+capture:
+  interface: "mon0"
+
+tracker:
+  ttl_s: 15
+  min_frames_to_confirm: 2
+  update_interval_s: 1.0
+
+replay:
+  speed: 1.0
+
+gps:
+  enabled: true
