@@ -65,3 +65,7 @@
 - Added optional HTTP status server (configurable) and status store updates from telemetry.
 - Added GPS fusion and progress tracking in repo.
 - Tests: `pytest -q` -> `11 passed in 0.44s`.
+
+## Update 2026-02-14 (Docs)
+- Added production README with install/run/replay/validate usage and config notes.
+- Validation: `pytest -q` -> `11 passed in 0.44s` (latest).
