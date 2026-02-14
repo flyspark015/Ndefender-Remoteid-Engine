@@ -16,15 +16,12 @@ from ndefender_remoteid_engine.tracking.models import ContactState, Observation
 NowProvider = Callable[[], int]
 
 
-def _derive_contact_id(obs: Observation) -> str:
+def _derive_contact_id(obs: Observation) -> Optional[str]:
     if obs.basic_id:
         return f"rid:{obs.basic_id}"
     if obs.mac:
         return f"rid:mac:{obs.mac}"
-    if obs.operator_id:
-        return f"rid:op:{obs.operator_id}"
-    anonymous = "anon"
-    return f"rid:{anonymous}"
+    return None
 
 
 @dataclass
@@ -54,6 +51,8 @@ class ContactTracker:
             obs = Observation(**{**obs.__dict__, "timestamp_ms": obs_ts})
 
         contact_id = _derive_contact_id(obs)
+        if contact_id is None:
+            return []
         state = self._contacts.get(contact_id)
         if state is None:
             state = ContactState(

@@ -2,6 +2,8 @@ import argparse
 import sys
 from collections import Counter
 
+from ndefender_remoteid_engine.config import AppConfig, load_config
+from ndefender_remoteid_engine.engine import ReplayEngine
 from ndefender_remoteid_engine.events.validate import validate_event
 from ndefender_remoteid_engine.io.jsonl import read_jsonl
 from ndefender_remoteid_engine.version import __version__
@@ -21,6 +23,9 @@ def _build_parser() -> argparse.ArgumentParser:
 
     replay_parser = subparsers.add_parser("replay", help="Replay EK JSONL log")
     replay_parser.add_argument("--log", required=True, help="Path to EK JSONL log")
+    replay_parser.add_argument("--config", help="Path to config YAML")
+    replay_parser.add_argument("--speed", type=float, help="Replay speed multiplier")
+    replay_parser.add_argument("--emit-progress", action="store_true", help="Emit replay progress events")
 
     validate_parser = subparsers.add_parser("validate", help="Validate EK JSONL log")
     validate_parser.add_argument("--log", required=True, help="Path to EK JSONL log")
@@ -36,10 +41,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "run":
-        print(f"run: config={args.config}")
-        return 0
+        print("run: live capture not implemented yet")
+        return 2
     if args.command == "replay":
-        print(f"replay: log={args.log}")
+        if args.config:
+            cfg = load_config(args.config)
+        else:
+            cfg = AppConfig()
+        engine = ReplayEngine(
+            log_path=args.log,
+            config=cfg,
+            emit_progress=args.emit_progress,
+        )
+        engine.run(speed_override=args.speed)
         return 0
     if args.command == "validate":
         total = 0
