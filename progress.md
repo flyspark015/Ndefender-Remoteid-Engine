@@ -91,3 +91,9 @@
 - Added systemd service `ndefender-remoteid-engine` (toybook) and updated backend env to new log path/service.
 - Verified `/api/v1/status` reflects `remote_id.health` and `contacts` from canonical events.
 - Proof captured: `journalctl -u ndefender-remoteid-engine`, `/api/v1/status` snippets, UI screenshot.
+
+## Update 2026-02-14 (Contract Cleanup)
+- Backend /api/v1/status remote_id fields normalized (health.state, no duplicate status/updated_ts/age fields).
+- Replay health state now reports REPLAY when replay_active=true.
+- Contact source mode aligned with remote_id.mode.
+- Canonical audit: `checked 128 events` -> `canonical check ok`.
