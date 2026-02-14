@@ -85,3 +85,9 @@
 - Added canonical event verification script and systemd service for `ndefender-remoteid-engine`.
 - Systemd backend env updated to new log path and service name.
 - Validation: canonical log check -> `checked 52 events` / `canonical check ok`.
+
+## Update 2026-02-14 (Backend Integration)
+- Backend aggregator now consumes canonical RemoteID events from `remoteid_engine.jsonl`.
+- Added systemd service `ndefender-remoteid-engine` (toybook) and updated backend env to new log path/service.
+- Verified `/api/v1/status` reflects `remote_id.health` and `contacts` from canonical events.
+- Proof captured: `journalctl -u ndefender-remoteid-engine`, `/api/v1/status` snippets, UI screenshot.
