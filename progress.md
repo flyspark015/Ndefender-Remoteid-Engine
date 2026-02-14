@@ -79,3 +79,9 @@
 ## Update 2026-02-14 (Deployment)
 - Added deployment notes and systemd example to README.
 - Tests: `pytest -q` -> `12 passed in 0.41s` (latest).
+
+## Update 2026-02-14 (Integration Phase)
+- Backend aggregator updated to consume canonical RemoteID events from `/opt/ndefender/logs/remoteid_engine.jsonl`.
+- Added canonical event verification script and systemd service for `ndefender-remoteid-engine`.
+- Systemd backend env updated to new log path and service name.
+- Validation: canonical log check -> `checked 52 events` / `canonical check ok`.
