@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+      - name: Run tests
+        run: |
+          pytest -q
+      - name: Schema validation check
+        run: |
+          python - <<'PY'
+          import json
+          from ndefender_remoteid_engine.events.validate import validate_event
+          sample = {
+              "type": "CONTACT_NEW",
+              "timestamp": 1700000000000,
+              "source": "remoteid",
+              "data": {
+                  "id": "rid:123",
+                  "type": "REMOTE_ID",
+                  "last_seen_ts": 1700000000000
+              }
+          }
+          validate_event(sample)
+          print("schema ok")
+          PY
+      - name: Compile check
+        run: |
+          python -m compileall -q src
