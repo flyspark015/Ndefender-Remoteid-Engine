@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
+from ndefender_remoteid_engine.api.http_server import StatusHttpServer
 from ndefender_remoteid_engine.api.server import BackendEmitter, CompositeEmitter
+from ndefender_remoteid_engine.api.status import StatusStore
 from ndefender_remoteid_engine.capture.replay_capture import ReplayCapture
 from ndefender_remoteid_engine.capture.wifi_capture import WifiCapture
 from ndefender_remoteid_engine.config import AppConfig, ReplayConfig, TelemetryConfig, TrackerConfig
@@ -47,6 +49,8 @@ class ReplayEngine:
     _health: HealthMonitor = field(init=False)
     _gps: Optional[GpsMonitor] = field(default=None, init=False)
     _last_ts: Optional[int] = field(default=None, init=False)
+    _status_store: Optional[StatusStore] = field(default=None, init=False)
+    _status_server: Optional[StatusHttpServer] = field(default=None, init=False)
 
     def __post_init__(self) -> None:
         tracker_cfg: TrackerConfig = self.config.tracker
@@ -66,6 +70,13 @@ class ReplayEngine:
         )
         if self.config.gps.enabled:
             self._gps = GpsMonitor()
+        if self.config.api.enabled:
+            self._status_store = StatusStore()
+            self._status_server = StatusHttpServer(
+                host=self.config.api.host,
+                port=self.config.api.port,
+                store=self._status_store,
+            )
 
     def _emit(self, event: dict) -> None:
         if self.validate_events:
@@ -80,6 +91,8 @@ class ReplayEngine:
         )
         if telemetry:
             self._emit(telemetry)
+            if self._status_store is not None:
+                self._status_store.update_from_telemetry(telemetry)
 
     def run(self, speed_override: Optional[float] = None) -> None:
         replay_cfg: ReplayConfig = self.config.replay
@@ -93,6 +106,8 @@ class ReplayEngine:
         )
 
         self._health.start()
+        if self._status_server is not None:
+            self._status_server.start()
 
         def handler(obs) -> None:
             if not self._dedupe.accept(obs):
@@ -118,6 +133,8 @@ class ReplayEngine:
             self._emit_telemetry(flush_ts)
 
         self._health.stop()
+        if self._status_server is not None:
+            self._status_server.stop()
         stop_fn = getattr(self.emitter, "stop", None)
         if stop_fn:
             stop_fn()
@@ -136,6 +153,8 @@ class LiveEngine:
     _health: HealthMonitor = field(init=False)
     _gps: Optional[GpsMonitor] = field(default=None, init=False)
     _last_ts: Optional[int] = field(default=None, init=False)
+    _status_store: Optional[StatusStore] = field(default=None, init=False)
+    _status_server: Optional[StatusHttpServer] = field(default=None, init=False)
 
     def __post_init__(self) -> None:
         tracker_cfg: TrackerConfig = self.config.tracker
@@ -155,6 +174,13 @@ class LiveEngine:
         )
         if self.config.gps.enabled:
             self._gps = GpsMonitor()
+        if self.config.api.enabled:
+            self._status_store = StatusStore()
+            self._status_server = StatusHttpServer(
+                host=self.config.api.host,
+                port=self.config.api.port,
+                store=self._status_store,
+            )
 
     def _emit(self, event: dict) -> None:
         if self.validate_events:
@@ -169,12 +195,16 @@ class LiveEngine:
         )
         if telemetry:
             self._emit(telemetry)
+            if self._status_store is not None:
+                self._status_store.update_from_telemetry(telemetry)
 
     def run(self) -> None:
         capture = self.capture_factory() if self.capture_factory else WifiCapture(
             interface=self.config.capture.interface
         )
         self._health.start()
+        if self._status_server is not None:
+            self._status_server.start()
 
         try:
             for record in capture.iter_records():
@@ -206,6 +236,8 @@ class LiveEngine:
             self._emit_telemetry(flush_ts)
 
         self._health.stop()
+        if self._status_server is not None:
+            self._status_server.stop()
         stop_fn = getattr(self.emitter, "stop", None)
         if stop_fn:
             stop_fn()

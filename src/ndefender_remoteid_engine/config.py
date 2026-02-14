@@ -45,6 +45,13 @@ class BackendConfig:
 
 
 @dataclass
+class ApiConfig:
+    enabled: bool = False
+    host: str = "0.0.0.0"
+    port: int = 9001
+
+
+@dataclass
 class AppConfig:
     capture: CaptureConfig = field(default_factory=CaptureConfig)
     tracker: TrackerConfig = field(default_factory=TrackerConfig)
@@ -52,6 +59,7 @@ class AppConfig:
     gps: GpsConfig = field(default_factory=GpsConfig)
     telemetry: TelemetryConfig = field(default_factory=TelemetryConfig)
     backend: BackendConfig = field(default_factory=BackendConfig)
+    api: ApiConfig = field(default_factory=ApiConfig)
 
 
 def _load_yaml(path: str | Path) -> dict[str, Any]:
@@ -72,6 +80,7 @@ def load_config(path: str | Path) -> AppConfig:
     gps = data.get("gps", {})
     telemetry = data.get("telemetry", {})
     backend = data.get("backend", {})
+    api = data.get("api", {})
 
     return AppConfig(
         capture=CaptureConfig(interface=str(capture.get("interface", "mon0"))),
@@ -92,5 +101,10 @@ def load_config(path: str | Path) -> AppConfig:
             reconnect_s=float(backend.get("reconnect_s", 5.0)),
             ping_interval_s=float(backend.get("ping_interval_s", 20.0)),
             queue_max=int(backend.get("queue_max", 1000)),
+        ),
+        api=ApiConfig(
+            enabled=bool(api.get("enabled", False)),
+            host=str(api.get("host", "0.0.0.0")),
+            port=int(api.get("port", 9001)),
         ),
     )

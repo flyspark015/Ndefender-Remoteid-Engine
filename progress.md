@@ -11,17 +11,17 @@
 - Backend WebSocket emitter with reconnect and queueing + composite logging emitter.
 - CI workflow (tests, schema validation, compile check).
 - GPS fusion module (gpsd via gpspipe) with TPV parsing.
+- Optional HTTP status API with status store and handler.
 
 ## 🟡 What is currently in progress
-- None (ready for next phase selection).
+- Optional HTTP status API integration and verification.
 
 ## ❌ What is pending
-- Optional API service layer for status/health exposure.
 - CLI enhancements for engine log validation/stats beyond generic JSONL.
 - Production usage/deployment documentation.
 
 ## 🧪 Verification results
-- `pytest -q` -> `10 passed in 0.46s`
+- `pytest -q` -> `11 passed in 0.44s`
 - `python -m compileall -q src` -> success
 - Schema validation quick check -> `schema ok`
 
@@ -30,6 +30,7 @@
 - Replay tests: deterministic replay, REPLAY_STATE emission.
 - Engine tests: replay engine and live engine coverage.
 - GPS parsing test: TPV parsing and non-TPV rejection.
+- Status store test: telemetry update snapshot.
 
 ## 📦 Code changes implemented
 - `src/ndefender_remoteid_engine/decode/odid_parser.py`
@@ -42,6 +43,8 @@
 - `src/ndefender_remoteid_engine/health.py`
 - `src/ndefender_remoteid_engine/engine.py`
 - `src/ndefender_remoteid_engine/api/server.py`
+- `src/ndefender_remoteid_engine/api/status.py`
+- `src/ndefender_remoteid_engine/api/http_server.py`
 - `src/ndefender_remoteid_engine/events/schema.json`
 - `src/ndefender_remoteid_engine/events/validate.py`
 - `src/ndefender_remoteid_engine/io/jsonl.py`
@@ -57,3 +60,8 @@
 - Canonical schema enforcement with strict additionalProperties false.
 - Composite emitter always logs to JSONL and optionally streams to backend WS.
 - GPS fusion is optional and non-blocking (uses gpspipe, best-effort).
+
+## Update 2026-02-14
+- Added optional HTTP status server (configurable) and status store updates from telemetry.
+- Added GPS fusion and progress tracking in repo.
+- Tests: `pytest -q` -> `11 passed in 0.44s`.
