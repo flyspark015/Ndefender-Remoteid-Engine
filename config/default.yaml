@@ -11,3 +11,14 @@ replay:
 
 gps:
   enabled: true
+
+telemetry:
+  interval_s: 1.0
+  stale_after_s: 5.0
+
+backend:
+  enabled: false
+  ws_url: "ws://127.0.0.1:8000/api/v1/ws"
+  reconnect_s: 5.0
+  ping_interval_s: 20.0
+  queue_max: 1000

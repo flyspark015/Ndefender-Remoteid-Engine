@@ -36,12 +36,22 @@ class TelemetryConfig:
 
 
 @dataclass
+class BackendConfig:
+    enabled: bool = False
+    ws_url: str = "ws://127.0.0.1:8000/api/v1/ws"
+    reconnect_s: float = 5.0
+    ping_interval_s: float = 20.0
+    queue_max: int = 1000
+
+
+@dataclass
 class AppConfig:
     capture: CaptureConfig = field(default_factory=CaptureConfig)
     tracker: TrackerConfig = field(default_factory=TrackerConfig)
     replay: ReplayConfig = field(default_factory=ReplayConfig)
     gps: GpsConfig = field(default_factory=GpsConfig)
     telemetry: TelemetryConfig = field(default_factory=TelemetryConfig)
+    backend: BackendConfig = field(default_factory=BackendConfig)
 
 
 def _load_yaml(path: str | Path) -> dict[str, Any]:
@@ -61,6 +71,7 @@ def load_config(path: str | Path) -> AppConfig:
     replay = data.get("replay", {})
     gps = data.get("gps", {})
     telemetry = data.get("telemetry", {})
+    backend = data.get("backend", {})
 
     return AppConfig(
         capture=CaptureConfig(interface=str(capture.get("interface", "mon0"))),
@@ -74,5 +85,12 @@ def load_config(path: str | Path) -> AppConfig:
         telemetry=TelemetryConfig(
             interval_s=float(telemetry.get("interval_s", 1.0)),
             stale_after_s=float(telemetry.get("stale_after_s", 5.0)),
+        ),
+        backend=BackendConfig(
+            enabled=bool(backend.get("enabled", False)),
+            ws_url=str(backend.get("ws_url", "ws://127.0.0.1:8000/api/v1/ws")),
+            reconnect_s=float(backend.get("reconnect_s", 5.0)),
+            ping_interval_s=float(backend.get("ping_interval_s", 20.0)),
+            queue_max=int(backend.get("queue_max", 1000)),
         ),
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
+from ndefender_remoteid_engine.api.server import BackendEmitter, CompositeEmitter
 from ndefender_remoteid_engine.capture.replay_capture import ReplayCapture
 from ndefender_remoteid_engine.capture.wifi_capture import WifiCapture
 from ndefender_remoteid_engine.config import AppConfig, ReplayConfig, TelemetryConfig, TrackerConfig
@@ -17,11 +18,25 @@ from ndefender_remoteid_engine.tracking.tracker import ContactTracker
 CaptureFactory = Callable[[], object]
 
 
+def build_default_emitter(config: AppConfig) -> CompositeEmitter:
+    emitters: list[object] = [JsonlEmitter()]
+    if config.backend.enabled:
+        emitters.append(
+            BackendEmitter(
+                ws_url=config.backend.ws_url,
+                reconnect_s=config.backend.reconnect_s,
+                ping_interval_s=config.backend.ping_interval_s,
+                queue_max=config.backend.queue_max,
+            )
+        )
+    return CompositeEmitter(emitters)
+
+
 @dataclass
 class ReplayEngine:
     log_path: str
     config: AppConfig = field(default_factory=AppConfig)
-    emitter: JsonlEmitter | SinkEmitter = field(default_factory=JsonlEmitter)
+    emitter: JsonlEmitter | SinkEmitter | CompositeEmitter = field(default=None)
     validate_events: bool = False
     emit_progress: bool = False
 
@@ -34,6 +49,9 @@ class ReplayEngine:
     def __post_init__(self) -> None:
         tracker_cfg: TrackerConfig = self.config.tracker
         telemetry_cfg: TelemetryConfig = self.config.telemetry
+
+        if self.emitter is None:
+            self.emitter = build_default_emitter(self.config)
 
         self._tracker = ContactTracker(
             ttl_s=tracker_cfg.ttl_s,
@@ -94,12 +112,15 @@ class ReplayEngine:
             self._emit_telemetry(flush_ts)
 
         self._health.stop()
+        stop_fn = getattr(self.emitter, "stop", None)
+        if stop_fn:
+            stop_fn()
 
 
 @dataclass
 class LiveEngine:
     config: AppConfig = field(default_factory=AppConfig)
-    emitter: JsonlEmitter | SinkEmitter = field(default_factory=JsonlEmitter)
+    emitter: JsonlEmitter | SinkEmitter | CompositeEmitter = field(default=None)
     validate_events: bool = False
     capture_factory: Optional[Callable[[], WifiCapture]] = None
 
@@ -112,6 +133,9 @@ class LiveEngine:
     def __post_init__(self) -> None:
         tracker_cfg: TrackerConfig = self.config.tracker
         telemetry_cfg: TelemetryConfig = self.config.telemetry
+
+        if self.emitter is None:
+            self.emitter = build_default_emitter(self.config)
 
         self._tracker = ContactTracker(
             ttl_s=tracker_cfg.ttl_s,
@@ -171,3 +195,6 @@ class LiveEngine:
             self._emit_telemetry(flush_ts)
 
         self._health.stop()
+        stop_fn = getattr(self.emitter, "stop", None)
+        if stop_fn:
+            stop_fn()
