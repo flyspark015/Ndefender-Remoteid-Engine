@@ -12,16 +12,16 @@
 - CI workflow (tests, schema validation, compile check).
 - GPS fusion module (gpsd via gpspipe) with TPV parsing.
 - Optional HTTP status API with status store and handler.
+- CLI stats enhancements for engine logs.
 
 ## 🟡 What is currently in progress
-- Optional HTTP status API integration and verification.
+- Final CLI and documentation polish.
 
 ## ❌ What is pending
-- CLI enhancements for engine log validation/stats beyond generic JSONL.
 - Production usage/deployment documentation.
 
 ## 🧪 Verification results
-- `pytest -q` -> `11 passed in 0.44s`
+- `pytest -q` -> `12 passed in 0.41s`
 - `python -m compileall -q src` -> success
 - Schema validation quick check -> `schema ok`
 
@@ -31,6 +31,7 @@
 - Engine tests: replay engine and live engine coverage.
 - GPS parsing test: TPV parsing and non-TPV rejection.
 - Status store test: telemetry update snapshot.
+- CLI stats test: counts and unique contacts.
 
 ## 📦 Code changes implemented
 - `src/ndefender_remoteid_engine/decode/odid_parser.py`
@@ -69,3 +70,8 @@
 ## Update 2026-02-14 (Docs)
 - Added production README with install/run/replay/validate usage and config notes.
 - Validation: `pytest -q` -> `11 passed in 0.44s` (latest).
+
+## Update 2026-02-14 (CLI Stats)
+- Enhanced `stats` command with contact counts, time range, and active contact tracking.
+- Added CLI stats test coverage.
+- Tests: `pytest -q` -> `12 passed in 0.41s`.
