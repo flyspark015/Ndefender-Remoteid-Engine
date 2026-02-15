@@ -28,8 +28,13 @@ class ReplayCapture:
     def iter_observations(self) -> Iterable[Observation]:
         for record in read_jsonl(self.path):
             obs = self.parser.parse_record(record)
-            if obs is not None:
-                yield obs
+            if obs is None:
+                continue
+            if obs.operator_id and not obs.basic_id and not obs.mac:
+                # Replay logs sometimes only include operator_id. Synthesize a stable ID
+                # for replay-only contact tracking to avoid dropping all observations.
+                obs = Observation(**{**obs.__dict__, "basic_id": f"opid:{obs.operator_id}"})
+            yield obs
 
     def _emit_state(self, state: str, speed: float, position: int, ts_ms: Optional[int]) -> None:
         if self.state_sink is None:
