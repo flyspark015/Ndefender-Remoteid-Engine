@@ -189,6 +189,25 @@ Allowed event types:
 - `backend.enabled`, `backend.ws_url`
 - `api.enabled`, `api.host`, `api.port`
 
+## 10.1) Capture Interface Bring-Up (mon0)
+Create and validate monitor interface:
+```bash
+iw dev
+sudo iw phy phy1 interface add mon0 type monitor
+sudo ip link set mon0 up
+ip link show mon0 || true
+```
+
+Minimal capture checks:
+```bash
+sudo tshark -i mon0 -a duration:5 -c 20
+sudo tshark -i mon0 -a duration:8 -Y opendroneid -T fields -e OpenDroneID.basicID_id_asc 2>/dev/null | head
+```
+
+Notes:
+- You will not see ODID frames unless a nearby drone is broadcasting.
+- If tshark exits, the engine now logs the error and retries with a short backoff.
+
 ## 11) Validation & Testing
 Key tests:
 - Contact confirmation
