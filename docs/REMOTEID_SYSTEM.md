@@ -52,7 +52,7 @@ The RemoteID engine is a modular Python package designed to capture, decode, ded
 Replay mode allows deterministic playback without hardware.
 
 - Input: EK JSONL capture log.
-- Timing: Uses record timestamps and a speed multiplier.
+- Timing: Uses record timestamp_ms values and a speed multiplier.
 - Events: Emits `REPLAY_STATE` and contact events.
 - Replay-only ID synthesis:
   - If `operator_id` exists but `basic_id` and `mac` do not, replay assigns `basic_id = "opid:<operator_id>"` to allow stable contact tracking.
@@ -124,7 +124,7 @@ All events use the canonical envelope:
 ```json
 {
   "type": "CONTACT_NEW",
-  "timestamp": 1700000000000,
+  "timestamp_ms": 1700000000000,
   "source": "remoteid",
   "data": { }
 }

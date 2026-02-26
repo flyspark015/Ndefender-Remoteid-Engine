@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
             event_type = event.get("type", "UNKNOWN")
             counts[event_type] += 1
             total += 1
-            ts = event.get("timestamp")
+            ts = event.get("timestamp_ms") or event.get("timestamp")
             if isinstance(ts, int):
                 if first_ts is None or ts < first_ts:
                     first_ts = ts

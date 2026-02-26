@@ -15,7 +15,7 @@ EventSink = Callable[[Event], None]
 def build_event(event_type: str, timestamp_ms: int, data: Dict[str, Any]) -> Event:
     return {
         "type": event_type,
-        "timestamp": int(timestamp_ms),
+        "timestamp_ms": int(timestamp_ms),
         "source": "remoteid",
         "data": data,
     }

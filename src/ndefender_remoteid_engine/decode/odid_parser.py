@@ -99,7 +99,7 @@ def _speed_from_raw(raw: Optional[int]) -> Optional[float]:
 @dataclass
 class OdidParser:
     def parse_record(self, record: dict[str, Any]) -> Optional[Observation]:
-        timestamp_ms = _to_int(record.get("timestamp"))
+        timestamp_ms = _to_int(record.get("timestamp_ms") or record.get("timestamp"))
         layers = record.get("layers", {})
 
         if timestamp_ms is None:

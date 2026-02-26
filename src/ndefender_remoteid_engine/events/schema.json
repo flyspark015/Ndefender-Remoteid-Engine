@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "N-Defender RemoteID Event Envelope",
   "type": "object",
-  "required": ["type", "timestamp", "source", "data"],
+  "required": ["type", "timestamp_ms", "source", "data"],
   "additionalProperties": false,
   "properties": {
     "type": {
@@ -14,7 +14,7 @@
         "REPLAY_STATE"
       ]
     },
-    "timestamp": {"type": "integer", "minimum": 0},
+    "timestamp_ms": {"type": "integer", "minimum": 0},
     "source": {"const": "remoteid"},
     "data": {"type": "object"}
   },

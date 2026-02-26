@@ -36,7 +36,12 @@ class StatusStore:
                 last_ts=int(data.get("last_ts", self._snapshot.last_ts)),
                 contacts_active=int(data.get("contacts_active", self._snapshot.contacts_active)),
                 mode=str(data.get("mode", self._snapshot.mode)),
-                updated_ts=int(event.get("timestamp", self._snapshot.updated_ts)),
+                updated_ts=int(
+                    event.get(
+                        "timestamp_ms",
+                        event.get("timestamp", self._snapshot.updated_ts),
+                    )
+                ),
             )
 
     def snapshot(self) -> StatusSnapshot:
