@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 import threading
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -12,20 +13,47 @@ from ndefender_remoteid_engine.api.status import StatusStore
 class _StatusHandler(BaseHTTPRequestHandler):
     store: StatusStore
 
-    def do_GET(self) -> None:  # noqa: N802
-        if self.path not in ("/api/v1/status", "/api/v1/health"):
-            self.send_response(404)
-            self.end_headers()
-            return
-
-        snapshot = self.store.snapshot().to_dict()
-        payload = json.dumps(snapshot).encode("utf-8")
-
-        self.send_response(200)
+    def _send_json(self, status: int, payload: dict) -> None:
+        data = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Content-Length", str(len(data)))
         self.end_headers()
-        self.wfile.write(payload)
+        self.wfile.write(data)
+
+    def _send_error(self, status: int, detail: str) -> None:
+        self._send_json(status, {"detail": detail})
+
+    def do_GET(self) -> None:  # noqa: N802
+        now_ms = int(time.time() * 1000)
+        if self.path == "/api/v1/health":
+            return self._send_json(200, {"status": "ok", "timestamp_ms": now_ms})
+        if self.path == "/api/v1/status":
+            snapshot = self.store.snapshot().to_dict()
+            if not snapshot.get("timestamp_ms"):
+                snapshot["timestamp_ms"] = now_ms
+            return self._send_json(200, snapshot)
+        if self.path == "/api/v1/contacts":
+            return self._send_json(200, {"timestamp_ms": now_ms, "contacts": self.store.contacts()})
+        if self.path == "/api/v1/stats":
+            payload = {"timestamp_ms": now_ms, **self.store.stats()}
+            return self._send_json(200, payload)
+        if self.path == "/api/v1/replay/state":
+            payload = {"timestamp_ms": now_ms, **self.store.replay_state()}
+            return self._send_json(200, payload)
+        self.send_response(404)
+        self.end_headers()
+
+    def do_POST(self) -> None:  # noqa: N802
+        if self.path in (
+            "/api/v1/monitor/start",
+            "/api/v1/monitor/stop",
+            "/api/v1/replay/start",
+            "/api/v1/replay/stop",
+        ):
+            return self._send_error(409, "not_implemented")
+        self.send_response(404)
+        self.end_headers()
 
     def log_message(self, format: str, *args) -> None:  # noqa: A003
         return

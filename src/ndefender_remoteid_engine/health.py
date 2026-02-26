@@ -44,7 +44,7 @@ class HealthMonitor:
             self.last_emit_ts = now_ms
             data = {
                 "state": self._state(now_ms, mode),
-                "last_ts": self.last_frame_ts or 0,
+                "last_update_ms": self.last_frame_ts or 0,
                 "contacts_active": int(contacts_active),
                 "mode": mode,
             }

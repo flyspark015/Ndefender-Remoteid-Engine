@@ -82,6 +82,8 @@ class ReplayEngine:
         if self.validate_events:
             validate_event(event)
         self.emitter.emit(event)
+        if self._status_store is not None:
+            self._status_store.update_from_event(event)
 
     def _emit_telemetry(self, now_ms: int) -> None:
         telemetry = self._health.maybe_emit(
@@ -186,6 +188,8 @@ class LiveEngine:
         if self.validate_events:
             validate_event(event)
         self.emitter.emit(event)
+        if self._status_store is not None:
+            self._status_store.update_from_event(event)
 
     def _emit_telemetry(self, now_ms: int) -> None:
         telemetry = self._health.maybe_emit(

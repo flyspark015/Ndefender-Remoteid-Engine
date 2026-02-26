@@ -70,10 +70,10 @@
     "telemetry_event": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["state", "last_ts", "contacts_active", "mode"],
+      "required": ["state", "last_update_ms", "contacts_active", "mode"],
       "properties": {
         "state": {"enum": ["offline", "ok", "degraded", "replay"]},
-        "last_ts": {"type": "integer", "minimum": 0},
+        "last_update_ms": {"type": "integer", "minimum": 0},
         "contacts_active": {"type": "integer", "minimum": 0},
         "mode": {"enum": ["live", "replay"]}
       }

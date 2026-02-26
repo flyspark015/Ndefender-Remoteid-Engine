@@ -101,15 +101,22 @@ If `api.enabled: true`, the engine exposes:
 
 - `GET /api/v1/status`
 - `GET /api/v1/health`
+- `GET /api/v1/contacts`
+- `GET /api/v1/stats`
+- `POST /api/v1/monitor/start`
+- `POST /api/v1/monitor/stop`
+- `GET /api/v1/replay/state`
+- `POST /api/v1/replay/start`
+- `POST /api/v1/replay/stop`
 
 Response:
 ```json
 {
+  "timestamp_ms": 1700000000000,
   "state": "ok",
-  "last_ts": 1700000000000,
   "contacts_active": 3,
   "mode": "live",
-  "updated_ts": 1700000000000
+  "last_update_ms": 1700000000000
 }
 ```
 
@@ -156,7 +163,7 @@ Allowed event types:
 ```json
 {
   "state": "ok",
-  "last_ts": 1700000000000,
+  "last_update_ms": 1700000000000,
   "contacts_active": 3,
   "mode": "live"
 }
